@@ -54,6 +54,30 @@ exports["default"] = EventStream;
 module.exports = exports["default"];
 
 },{}],3:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = [
+// The first adapter in this file to return true from match(gamepad) will be
+// used. If no adapter matches, the gamepad is not supported.
+
+{
+  name: "PlayStation 3",
+  match: function match(gamepad) {
+    return gamepad.id.indexOf("PLAYSTATION(R)3 Controller") != 0;
+  },
+  mappings: {
+    4: 'thrust', // D-pad up
+    14: 'thrust', // X
+    7: 'left', // D-pad left
+    5: 'right' // D-pad right
+  }
+}];
+module.exports = exports["default"];
+
+},{}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -62,22 +86,16 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var _gamepadAdapters = require('./gamepad-adapters');
+
+var _gamepadAdapters2 = _interopRequireDefault(_gamepadAdapters);
 
 var GamepadInput = (function () {
   _createClass(GamepadInput, null, [{
-    key: 'MAPPINGS',
-
-    // For PS3 controller
-    get: function get() {
-      return {
-        4: 'thrust', // D-pad up
-        14: 'thrust', // X
-        7: 'left', // D-pad left
-        5: 'right' // D-pad right
-      };
-    }
-  }, {
     key: 'MS_SAMPLE',
     get: function get() {
       return 50;
@@ -95,9 +113,21 @@ var GamepadInput = (function () {
   _createClass(GamepadInput, [{
     key: 'getGamepad',
     value: function getGamepad() {
-      return navigator.getGamepads().find(function (pad) {
-        return pad;
+      var adapter = undefined;
+
+      var gamepad = navigator.getGamepads().find(function (pad) {
+        // getGamepads() can return null entries
+        if (pad) {
+          adapter = _gamepadAdapters2['default'].find(function (adapter) {
+            return adapter.match(pad);
+          });
+          return adapter;
+        }
       });
+
+      if (adapter) {
+        return { pad: gamepad, adapter: adapter };
+      }
     }
   }, {
     key: 'bindToEvents',
@@ -111,17 +141,17 @@ var GamepadInput = (function () {
           return;
         }
 
-        _this.setStateFromButtons(gamepad.buttons);
+        _this.setStateFromButtons(gamepad.pad.buttons, gamepad.adapter);
       }, GamepadInput.MS_SAMPLE);
     }
   }, {
     key: 'setStateFromButtons',
-    value: function setStateFromButtons(buttons) {
+    value: function setStateFromButtons(buttons, adapter) {
       var newState = {};
 
       buttons.forEach(function (button, buttonIndex) {
         if (button.pressed) {
-          var action = GamepadInput.MAPPINGS[buttonIndex];
+          var action = adapter.mappings[buttonIndex];
 
           if (action) {
             newState[action] = true;
@@ -153,7 +183,7 @@ var GamepadInput = (function () {
 exports['default'] = GamepadInput;
 module.exports = exports['default'];
 
-},{}],4:[function(require,module,exports){
+},{"./gamepad-adapters":3}],5:[function(require,module,exports){
 'use strict';
 
 var _bind = Function.prototype.bind;
@@ -237,7 +267,7 @@ window.Client = (function () {
   return Client;
 })();
 
-},{"./gamepad-input":3,"./keyboard-input":5,"./player-input":6,"./rendering":7,"./stage":8,"msgpack-js-browser":9}],5:[function(require,module,exports){
+},{"./gamepad-input":4,"./keyboard-input":6,"./player-input":7,"./rendering":8,"./stage":9,"msgpack-js-browser":10}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -300,7 +330,7 @@ var KeyboardInput = (function () {
 exports['default'] = KeyboardInput;
 module.exports = exports['default'];
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -348,7 +378,7 @@ var PlayerInput = (function () {
 exports['default'] = PlayerInput;
 module.exports = exports['default'];
 
-},{"./event-stream":2}],7:[function(require,module,exports){
+},{"./event-stream":2}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -541,7 +571,7 @@ var Rendering = (function () {
 exports['default'] = Rendering;
 module.exports = exports['default'];
 
-},{"./doge":1}],8:[function(require,module,exports){
+},{"./doge":1}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -592,7 +622,7 @@ var Stage = (function () {
 exports['default'] = Stage;
 module.exports = exports['default'];
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 ( // Module boilerplate to support browser globals and browserify and AMD.
   typeof define === "function" ? function (m) { define("msgpack-js", m); } :
   typeof exports === "object" ? function (m) { module.exports = m(); } :
@@ -1194,4 +1224,4 @@ return exports;
 
 });
 
-},{}]},{},[4]);
+},{}]},{},[5]);
