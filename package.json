@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "babel": "^5.8.23",
+    "msgpack-js": "^0.3.0",
+    "msgpack-js-browser": "^0.1.4",
     "p2": "^0.7.0",
     "ws": "^0.8.0"
   }

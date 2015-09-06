@@ -1,6 +1,7 @@
 import http from 'http'
 import ws from 'ws'
 import fs from 'fs'
+import msgpack from 'msgpack-js'
 
 import Game from './lib/server/game'
 
@@ -44,7 +45,7 @@ setInterval(function() {
   game.tick(timeStepInMs / 500)
   game.ships.forEach(function(ship) {
     try {
-      ship.client.send(JSON.stringify({"state": game.state}))
+      ship.client.send(msgpack.encode({state: game.state}))
     } catch (e) {
       console.log(e)
     }
@@ -56,7 +57,7 @@ wss.on('connection', function (client) {
   let ship
 
   client.on('message', function (encoded) {
-    let message = JSON.parse(encoded)
+    let message = msgpack.decode(encoded)
 
     if(message.join) {
       ship = game.addShip(client, message.join.name)
