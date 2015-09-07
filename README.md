@@ -18,15 +18,31 @@ Open `http://localhost:8080`
 
 
 ## Messaging Spec
-`in flux`
+
+_Still being worked out._
+
+### Format
+
+The client and the server exchange messages encoded with [MessagePack](http://msgpack.org/)\*.
+
+Each message must have the following structure:
+
+    {
+        type: "...",
+        data: { ... }
+    }
+
+\* We're still evaluating the performance of encoding with MessagePack versus the bandwidth of plain JSON.
+
+### Client
 
 The client may send any of the following events:
 
-1. `join` with an optional `{ name: '<name-of-player>'}` payload
-2. `inputState` with a `{ <action>: <true|false>, ... }` payload
+1. `join` with `{ name: '<name-of-player>'}`
+2. `inputState` with `{ <action>: <true|false>, ... }`
 3. `leave`
 
-The server must periodically broadcast a `state` event with the following payload:
+The server may periodically broadcast a `state` event with the following `data`:
 
 ```
 {
