@@ -54,6 +54,136 @@ exports["default"] = EventStream;
 module.exports = exports["default"];
 
 },{}],3:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = [
+// The first adapter in this file to return true from match(gamepad) will be
+// used. If no adapter matches, the gamepad is not supported.
+
+{
+  name: "PlayStation 3",
+  match: function match(gamepad) {
+    return gamepad.id.indexOf("PLAYSTATION(R)3 Controller") != 0;
+  },
+  mappings: {
+    4: 'thrust', // D-pad up
+    14: 'thrust', // X
+    7: 'left', // D-pad left
+    5: 'right' // D-pad right
+  }
+}];
+module.exports = exports["default"];
+
+},{}],4:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var _gamepadAdapters = require('./gamepad-adapters');
+
+var _gamepadAdapters2 = _interopRequireDefault(_gamepadAdapters);
+
+var GamepadInput = (function () {
+  _createClass(GamepadInput, null, [{
+    key: 'MS_SAMPLE',
+    get: function get() {
+      return 50;
+    }
+  }]);
+
+  function GamepadInput(eventStream) {
+    _classCallCheck(this, GamepadInput);
+
+    this.events = eventStream;
+    this.state = {};
+    this.bindToEvents();
+  }
+
+  _createClass(GamepadInput, [{
+    key: 'getGamepad',
+    value: function getGamepad() {
+      var adapter = undefined;
+
+      var gamepad = navigator.getGamepads().find(function (pad) {
+        // getGamepads() can return null entries
+        if (pad) {
+          adapter = _gamepadAdapters2['default'].find(function (adapter) {
+            return adapter.match(pad);
+          });
+          return adapter;
+        }
+      });
+
+      if (adapter) {
+        return { pad: gamepad, adapter: adapter };
+      }
+    }
+  }, {
+    key: 'bindToEvents',
+    value: function bindToEvents() {
+      var _this = this;
+
+      setInterval(function () {
+        var gamepad = _this.getGamepad();
+
+        if (!gamepad) {
+          return;
+        }
+
+        _this.setStateFromButtons(gamepad.pad.buttons, gamepad.adapter);
+      }, GamepadInput.MS_SAMPLE);
+    }
+  }, {
+    key: 'setStateFromButtons',
+    value: function setStateFromButtons(buttons, adapter) {
+      var newState = {};
+
+      buttons.forEach(function (button, buttonIndex) {
+        if (button.pressed) {
+          var action = adapter.mappings[buttonIndex];
+
+          if (action) {
+            newState[action] = true;
+          }
+        }
+      });
+
+      this.setState(newState);
+    }
+  }, {
+    key: 'isDifferent',
+    value: function isDifferent(newState) {
+      // Fast comparison
+      return JSON.stringify(this.state) !== JSON.stringify(newState);
+    }
+  }, {
+    key: 'setState',
+    value: function setState(newState) {
+      if (this.isDifferent(newState)) {
+        this.state = newState;
+        this.events.broadcast('stateChange', this.state);
+      }
+    }
+  }]);
+
+  return GamepadInput;
+})();
+
+exports['default'] = GamepadInput;
+module.exports = exports['default'];
+
+},{"./gamepad-adapters":3}],5:[function(require,module,exports){
 'use strict';
 
 var _bind = Function.prototype.bind;
@@ -68,9 +198,17 @@ var _msgpackJsBrowser = require('msgpack-js-browser');
 
 var _msgpackJsBrowser2 = _interopRequireDefault(_msgpackJsBrowser);
 
-var _inputListener = require('./input-listener');
+var _playerInput = require('./player-input');
 
-var _inputListener2 = _interopRequireDefault(_inputListener);
+var _playerInput2 = _interopRequireDefault(_playerInput);
+
+var _keyboardInput = require('./keyboard-input');
+
+var _keyboardInput2 = _interopRequireDefault(_keyboardInput);
+
+var _gamepadInput = require('./gamepad-input');
+
+var _gamepadInput2 = _interopRequireDefault(_gamepadInput);
 
 var _rendering = require('./rendering');
 
@@ -91,7 +229,7 @@ window.Client = (function () {
     key: 'start',
     value: function start() {
       var stage = new _stage2['default'](1000, 600);
-      var input = new _inputListener2['default']();
+      var input = new _playerInput2['default'](_keyboardInput2['default'], _gamepadInput2['default']);
       var client = new WebSocket(document.location.protocol.replace('http', 'ws') + '//' + document.location.host);
       var thrusties = [];
 
@@ -129,7 +267,7 @@ window.Client = (function () {
   return Client;
 })();
 
-},{"./input-listener":4,"./rendering":5,"./stage":6,"msgpack-js-browser":7}],4:[function(require,module,exports){
+},{"./gamepad-input":4,"./keyboard-input":6,"./player-input":7,"./rendering":8,"./stage":9,"msgpack-js-browser":10}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -138,33 +276,32 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _eventStream = require('./event-stream');
-
-var _eventStream2 = _interopRequireDefault(_eventStream);
-
-var InputListener = (function () {
-  function InputListener() {
-    _classCallCheck(this, InputListener);
-
-    this.events = new _eventStream2['default']();
-    this.state = {};
-    this.bindToEvents();
-  }
-
-  _createClass(InputListener, [{
-    key: 'keyCodeAction',
-    value: function keyCodeAction(keyCode) {
-      var keyCodeToActionMappings = {
+var KeyboardInput = (function () {
+  _createClass(KeyboardInput, null, [{
+    key: 'MAPPINGS',
+    get: function get() {
+      return {
         38: 'thrust',
         37: 'left',
         39: 'right'
       };
+    }
+  }]);
 
-      return keyCodeToActionMappings[keyCode];
+  function KeyboardInput(eventStream) {
+    _classCallCheck(this, KeyboardInput);
+
+    this.events = eventStream;
+    this.state = {};
+    this.bindToEvents();
+  }
+
+  _createClass(KeyboardInput, [{
+    key: 'keyCodeAction',
+    value: function keyCodeAction(keyCode) {
+      return KeyboardInput.MAPPINGS[keyCode];
     }
   }, {
     key: 'bindToEvents',
@@ -187,13 +324,61 @@ var InputListener = (function () {
     }
   }]);
 
-  return InputListener;
+  return KeyboardInput;
 })();
 
-exports['default'] = InputListener;
+exports['default'] = KeyboardInput;
 module.exports = exports['default'];
 
-},{"./event-stream":2}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var _eventStream = require('./event-stream');
+
+var _eventStream2 = _interopRequireDefault(_eventStream);
+
+var PlayerInput = (function () {
+  function PlayerInput() {
+    _classCallCheck(this, PlayerInput);
+
+    this.events = new _eventStream2['default']();
+
+    for (var _len = arguments.length, inputSources = Array(_len), _key = 0; _key < _len; _key++) {
+      inputSources[_key] = arguments[_key];
+    }
+
+    this.inputSources = inputSources;
+    this.bindToEvents();
+  }
+
+  _createClass(PlayerInput, [{
+    key: 'bindToEvents',
+    value: function bindToEvents() {
+      var _this = this;
+
+      this.inputSources.forEach(function (source) {
+        return new source(_this.events);
+      });
+    }
+  }]);
+
+  return PlayerInput;
+})();
+
+exports['default'] = PlayerInput;
+module.exports = exports['default'];
+
+},{"./event-stream":2}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -386,7 +571,7 @@ var Rendering = (function () {
 exports['default'] = Rendering;
 module.exports = exports['default'];
 
-},{"./doge":1}],6:[function(require,module,exports){
+},{"./doge":1}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -437,7 +622,7 @@ var Stage = (function () {
 exports['default'] = Stage;
 module.exports = exports['default'];
 
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 ( // Module boilerplate to support browser globals and browserify and AMD.
   typeof define === "function" ? function (m) { define("msgpack-js", m); } :
   typeof exports === "object" ? function (m) { module.exports = m(); } :
@@ -1039,4 +1224,4 @@ return exports;
 
 });
 
-},{}]},{},[3]);
+},{}]},{},[5]);
