@@ -113,11 +113,13 @@ var GamepadInput = (function () {
   _createClass(GamepadInput, [{
     key: 'getGamepad',
     value: function getGamepad() {
-      var adapter = undefined;
+      var adapter = undefined,
+          gamepad = undefined;
 
-      var gamepad = navigator.getGamepads().find(function (pad) {
+      Array.prototype.some.call(navigator.getGamepads(), function (pad) {
         // getGamepads() can return null entries
         if (pad) {
+          gamepad = pad;
           adapter = _gamepadAdapters2['default'].find(function (adapter) {
             return adapter.match(pad);
           });
