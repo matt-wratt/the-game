@@ -47,7 +47,7 @@ The server may periodically broadcast a `state` event with the following `data`:
 ```
 {
   ships: [
-    { x: <float>, y: <float>, rotation: <radians>, name: <string>, ... },
+    { x: <float>, y: <float>, rotation: <radians>, name: <string>, hasDoge: <boolean>, ... },
     ...
   ]
 }
