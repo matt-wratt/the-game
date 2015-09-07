@@ -242,16 +242,20 @@ window.Client = (function () {
       client.binaryType = 'arraybuffer';
 
       client.onopen = (function () {
-        client.send(_msgpackJsBrowser2['default'].encode({ join: { name: this.name } }));
+        client.send(_msgpackJsBrowser2['default'].encode({ type: 'join', data: { name: this.name } }));
 
         input.events.on('stateChange', function (state) {
-          client.send(_msgpackJsBrowser2['default'].encode({ inputState: state }));
+          client.send(_msgpackJsBrowser2['default'].encode({ type: 'inputState', data: state }));
         });
       }).bind(this);
 
-      client.onmessage = function (message) {
-        var gameState = _msgpackJsBrowser2['default'].decode(message.data).state;
-        new _rendering2['default'](stage, gameState, thrusties).perform();
+      client.onmessage = function (messageEvent) {
+        var message = _msgpackJsBrowser2['default'].decode(messageEvent.data);
+
+        switch (message.type) {
+          case 'state':
+            new _rendering2['default'](stage, message.data, thrusties).perform();
+        }
       };
     }
   }], [{

@@ -45,7 +45,7 @@ setInterval(function() {
   game.tick(timeStepInMs / 500)
   game.ships.forEach(function(ship) {
     try {
-      ship.client.send(msgpack.encode({state: game.state}))
+      ship.client.send(msgpack.encode({type: 'state', data: game.state}))
     } catch (e) {
       console.log(e)
     }
@@ -59,16 +59,13 @@ wss.on('connection', function (client) {
   client.on('message', function (encoded) {
     let message = msgpack.decode(encoded)
 
-    if(message.join) {
-      ship = game.addShip(client, message.join.name)
-    }
-
-    if(ship && message.inputState) {
-      let state = message.inputState
-
-      ship.thrusting = state.thrust
-      ship.left = state.left
-      ship.right = state.right
+    switch(message.type) {
+      case 'join':
+        ship = game.addShip(client, message.data.name)
+      case 'inputState':
+        ship.thrusting = message.data.thrust
+        ship.left = message.data.left
+        ship.right = message.data.right
     }
 
   });
