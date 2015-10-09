@@ -72,10 +72,24 @@ exports["default"] = {
       14: 'thrust', // X
       7: 'left', // D-pad left
       5: 'right' }
+  }, // D-pad right
+  {
+    name: "Imitation SNES Controller",
+    match: function match(gamepad) {
+      return gamepad.id.indexOf('810-e501-usb gamepad') >= 0;
+    },
+    buttons: {
+      2: 'thrust', // Yellow B button,
+      4: 'left', // Shoulder button left
+      5: 'right' },
+    // Shoulder button right
+    axes: {
+      1: { negative: 'left', positive: 'right' },
+      2: { negative: 'thrust' }
+    }
   }]
 };
 module.exports = exports["default"];
-// D-pad right
 
 },{}],4:[function(require,module,exports){
 'use strict';
@@ -154,8 +168,6 @@ var GamepadInput = (function () {
     value: function setStateFromButtons(buttons, adapter) {
       var _this2 = this;
 
-      var newState = {};
-
       buttons.forEach(function (button, buttonIndex) {
         if (button.pressed) {
           var action = adapter.buttons[buttonIndex];
@@ -170,8 +182,6 @@ var GamepadInput = (function () {
     key: 'setStateFromAxes',
     value: function setStateFromAxes(axes, adapter) {
       var _this3 = this;
-
-      var newState = {};
 
       axes.forEach(function (axis, axisIndex) {
         var reading = undefined,
