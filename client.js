@@ -59,23 +59,23 @@ module.exports = exports["default"];
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports["default"] = [
-// The first adapter in this file to return true from match(gamepad) will be
-// used. If no adapter matches, the gamepad is not supported.
-
-{
-  name: "PlayStation 3",
-  match: function match(gamepad) {
-    return gamepad.id.indexOf("PLAYSTATION(R)3 Controller") != 0;
-  },
-  mappings: {
-    4: 'thrust', // D-pad up
-    14: 'thrust', // X
-    7: 'left', // D-pad left
-    5: 'right' // D-pad right
-  }
-}];
+exports["default"] = {
+  // The first adapter in this file to return true from match(gamepad) will be
+  // used. If no adapter matches, the gamepad is not supported.
+  all: [{
+    name: "PlayStation 3",
+    match: function match(gamepad) {
+      return gamepad.id.indexOf("PLAYSTATION(R)3 Controller") >= 0;
+    },
+    buttons: {
+      4: 'thrust', // D-pad up
+      14: 'thrust', // X
+      7: 'left', // D-pad left
+      5: 'right' }
+  }]
+};
 module.exports = exports["default"];
+// D-pad right
 
 },{}],4:[function(require,module,exports){
 'use strict';
@@ -86,13 +86,13 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 var _gamepadAdapters = require('./gamepad-adapters');
 
-var _gamepadAdapters2 = _interopRequireDefault(_gamepadAdapters);
+var GamepadAdapters = _interopRequireWildcard(_gamepadAdapters);
 
 var GamepadInput = (function () {
   _createClass(GamepadInput, null, [{
@@ -107,6 +107,7 @@ var GamepadInput = (function () {
 
     this.events = eventStream;
     this.state = {};
+    this.pendingState = {};
     this.bindToEvents();
   }
 
@@ -120,7 +121,7 @@ var GamepadInput = (function () {
         // getGamepads() can return null entries
         if (pad) {
           gamepad = pad;
-          adapter = _gamepadAdapters2['default'].find(function (adapter) {
+          adapter = GamepadAdapters.all.find(function (adapter) {
             return adapter.match(pad);
           });
           return adapter;
@@ -144,24 +145,55 @@ var GamepadInput = (function () {
         }
 
         _this.setStateFromButtons(gamepad.pad.buttons, gamepad.adapter);
+        _this.setStateFromAxes(gamepad.pad.axes, gamepad.adapter);
+        _this.flushState();
       }, GamepadInput.MS_SAMPLE);
     }
   }, {
     key: 'setStateFromButtons',
     value: function setStateFromButtons(buttons, adapter) {
+      var _this2 = this;
+
       var newState = {};
 
       buttons.forEach(function (button, buttonIndex) {
         if (button.pressed) {
-          var action = adapter.mappings[buttonIndex];
+          var action = adapter.buttons[buttonIndex];
 
           if (action) {
-            newState[action] = true;
+            _this2.pendingState[action] = true;
           }
         }
       });
+    }
+  }, {
+    key: 'setStateFromAxes',
+    value: function setStateFromAxes(axes, adapter) {
+      var _this3 = this;
 
-      this.setState(newState);
+      var newState = {};
+
+      axes.forEach(function (axis, axisIndex) {
+        var reading = undefined,
+            action = undefined;
+        var axisActions = adapter.axes[axisIndex];
+
+        if (!axisActions) {
+          return;
+        }
+
+        if (axis == 1) {
+          reading = 'positive';
+        } else if (axis == -1) {
+          reading = 'negative';
+        }
+
+        action = axisActions[reading];
+
+        if (action) {
+          _this3.pendingState[action] = true;
+        }
+      });
     }
   }, {
     key: 'isDifferent',
@@ -170,10 +202,11 @@ var GamepadInput = (function () {
       return JSON.stringify(this.state) !== JSON.stringify(newState);
     }
   }, {
-    key: 'setState',
-    value: function setState(newState) {
-      if (this.isDifferent(newState)) {
-        this.state = newState;
+    key: 'flushState',
+    value: function flushState() {
+      if (this.isDifferent(this.pendingState)) {
+        this.state = this.pendingState;
+        this.pendingState = {};
         this.events.broadcast('stateChange', this.state);
       }
     }
