@@ -217,7 +217,7 @@ var GamepadInput = (function () {
         action = axisActions[reading];
 
         if (action) {
-          _this3.pendingState[action] = Math.abs(axis);
+          _this3.pendingState[action] = Math.max(_this3.pendingState[action] || 0, Math.abs(axis));
         }
       });
     }
