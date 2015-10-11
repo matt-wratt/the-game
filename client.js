@@ -178,7 +178,7 @@ var GamepadInput = (function () {
           var action = adapter.buttons[buttonIndex];
 
           if (action) {
-            _this2.pendingState[action] = true;
+            _this2.pendingState[action] = 1;
           }
         }
       });
@@ -210,7 +210,7 @@ var GamepadInput = (function () {
         action = axisActions[reading];
 
         if (action) {
-          _this3.pendingState[action] = true;
+          _this3.pendingState[action] = 1;
         }
       });
     }
@@ -368,8 +368,8 @@ var KeyboardInput = (function () {
   }, {
     key: 'bindToEvents',
     value: function bindToEvents() {
-      window.addEventListener('keydown', this.setState(true));
-      window.addEventListener('keyup', this.setState(false));
+      window.addEventListener('keydown', this.setState(1));
+      window.addEventListener('keyup', this.setState(0));
     }
   }, {
     key: 'setState',
