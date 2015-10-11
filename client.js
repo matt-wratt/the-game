@@ -158,6 +158,7 @@ var GamepadInput = (function () {
           return;
         }
 
+        _this.resetState();
         _this.setStateFromButtons(gamepad.pad.buttons, gamepad.adapter);
         _this.setStateFromAxes(gamepad.pad.axes, gamepad.adapter);
         _this.flushState();
@@ -167,6 +168,10 @@ var GamepadInput = (function () {
     key: 'setStateFromButtons',
     value: function setStateFromButtons(buttons, adapter) {
       var _this2 = this;
+
+      if (!adapter.buttons) {
+        return;
+      }
 
       buttons.forEach(function (button, buttonIndex) {
         if (button.pressed) {
@@ -182,6 +187,10 @@ var GamepadInput = (function () {
     key: 'setStateFromAxes',
     value: function setStateFromAxes(axes, adapter) {
       var _this3 = this;
+
+      if (!adapter.axes) {
+        return;
+      }
 
       axes.forEach(function (axis, axisIndex) {
         var reading = undefined,
@@ -212,11 +221,15 @@ var GamepadInput = (function () {
       return JSON.stringify(this.state) !== JSON.stringify(newState);
     }
   }, {
+    key: 'resetState',
+    value: function resetState() {
+      this.pendingState = {};
+    }
+  }, {
     key: 'flushState',
     value: function flushState() {
       if (this.isDifferent(this.pendingState)) {
         this.state = this.pendingState;
-        this.pendingState = {};
         this.events.broadcast('stateChange', this.state);
       }
     }
