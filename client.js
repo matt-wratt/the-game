@@ -71,9 +71,16 @@ exports["default"] = {
       4: 'thrust', // D-pad up
       14: 'thrust', // X
       7: 'left', // D-pad left
-      5: 'right' }
-  }, // D-pad right
-  {
+      5: 'right', // D-pad right
+      9: 'thrust'
+    },
+    axes: {
+      0: { negative: 'left', positive: 'right' },
+      1: { negative: 'thrust' },
+      2: { negative: 'left', positive: 'right' },
+      3: { negative: 'thrust' }
+    }
+  }, {
     name: "Imitation SNES Controller",
     match: function match(gamepad) {
       return gamepad.id.indexOf('810-e501-usb gamepad') >= 0;
@@ -201,16 +208,16 @@ var GamepadInput = (function () {
           return;
         }
 
-        if (axis == 1) {
+        if (axis > 0) {
           reading = 'positive';
-        } else if (axis == -1) {
+        } else if (axis < 0) {
           reading = 'negative';
         }
 
         action = axisActions[reading];
 
         if (action) {
-          _this3.pendingState[action] = 1;
+          _this3.pendingState[action] = Math.abs(axis);
         }
       });
     }
